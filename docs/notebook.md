@@ -185,4 +185,10 @@ It is obvious that the most important thing we need here is the **posterior dist
 > [3] https://towardsdatascience.com/bayesian-inference-problem-mcmc-and-variational-inference-25a8aa9bce29?gi=b9f8ae748bb2
 > [4] https://www.quantstart.com/articles/Markov-Chain-Monte-Carlo-for-Bayesian-Inference-The-Metropolis-Algorithm/
 
+## 5. Definitions
 
+1. Conjugate prior: A conjugate prior is a type of prior distribution in Bayesian statistics that, when combined with a likelihood function, results in a posterior distribution belonging to the same family as the prior distribution. This property simplifies Bayesian inference by allowing for analytical solutions when deriving posterior distributions, rather than requiring numerical methods.
+
+## 6. Useful resources
+
+1. [On Bayesian inference of normal distributions](https://people.eecs.berkeley.edu/~jordan/courses/260-spring10/lectures/lecture5.pdf) - The documented version of the info given in class
