@@ -111,79 +111,154 @@ It is obvious that the most important thing we need here is the **posterior dist
 > [6] https://stephens999.github.io/fiveMinuteStats/shiny_normal_example.html
 > [7] https://www.youtube.com/watch?v=MIAm7eUfMok
 
-2. Prompt: How would MCMC sampling techniques like MCMC be used in this modelling process?
+2. Prompt: I have a prior distribution which is a normal with known mean and variance. I also have some additional data points. How should I sample the posterior distribution's mean and variance with Gibbs sampler?
 
-> MCMC (Markov Chain Monte Carlo) sampling techniques can be very useful in the Bayesian inference process you described, especially when dealing with complex posterior distributions that are not analytically tractable. Here's how MCMC, particularly the Metropolis algorithm, could be applied to your scenario:
+> To sample the posterior distribution's mean ($$\mu$$) and variance ($$\sigma^2$$) using the Gibbs sampler, you need to iteratively sample from their full conditional distributions. Here's how you can approach this step-by-step:
 > 
-> ## Why Use MCMC?
+> ---
 > 
-> In your case, while you have a conjugate prior (normal distribution) for the mean of a normal distribution, the addition of an unknown variance complicates the posterior. The resulting posterior distribution is a Normal-Inverse-Gamma, which can be challenging to work with directly, especially if you need to calculate expectations or credible intervals[1].
+> ## **Problem Setup**
 > 
-> ## Applying MCMC to Your Model
+> You have:
 > 
-> 1. **Define the Target Distribution**
+> - A prior distribution for $$\mu$$ (mean) and $$\sigma^2$$ (variance).
+> - Observed data points $$y_1, y_2, \dots, y_n$$.
 > 
-> The target distribution is your posterior distribution, which is proportional to:
+> Assume:
 > 
-> P(μ, σ² | data) ∝ P(data | μ, σ²) * P(μ) * P(σ²)
+> 1. The prior for $$\mu$$ is $$N(\mu_0, \tau_0^2)$$.
+> 2. The prior for $$\sigma^2$$ is an inverse-gamma distribution: $$\sigma^2 \sim IG(a_0, b_0)$$.
+> 3. The likelihood is $$y_i \sim N(\mu, \sigma^2)$$.
 > 
-> 2. **Initialize the Markov Chain**
+> The posterior distribution for $$(\mu, \sigma^2)$$ combines the prior and likelihood.
 > 
-> Start with initial guesses for μ and σ². For example:
+> ---
 > 
-> - μ₀ = sample mean of your data
+> ## **Full Conditional Distributions**
 > 
-> - σ²₀ = sample variance of your data
-> 3. **Propose New Values**
+> 1. **Conditional distribution of $$\mu | \sigma^2, y$$:**
+>    
+>    - Given the data and current value of $$\sigma^2$$, the conditional posterior of $$\mu$$ is normal:
+>      
+>      $$
+>      \mu | \sigma^2, y \sim N\left( \mu_n, \tau_n^2 \right),
+>      $$
+>      
+>      where:
+>    
+>    - $$ \mu_n = \frac{\frac{\mu_0}{\tau_0^2} + \frac{n\bar{y}}{\sigma^2}}{\frac{1}{\tau_0^2} + \frac{n}{\sigma^2}} $$,
+>    
+>    - $$ \tau_n^2 = \left( \frac{1}{\tau_0^2} + \frac{n}{\sigma^2} \right)^{-1} $$,
+>    
+>    - $$ n $$ is the number of data points,
+>    
+>    - $$ \bar{y} = \frac{1}{n} \sum_{i=1}^n y_i $$ is the sample mean.
 > 
-> At each iteration, propose new values for μ and σ² using a proposal distribution. A common choice is a normal distribution centered at the current values:
+> 2. **Conditional distribution of $$\sigma^2 | \mu, y$$:**
+>    
+>    - Given the data and current value of $$\mu$$, the conditional posterior of $$\sigma^2$$ is inverse-gamma:
+>      
+>      $$
+>      \sigma^2 | \mu, y \sim IG(a_n, b_n),
+>      $$
+>      
+>      where:
+>    
+>    - $$ a_n = a_0 + n/2 $$,
+>    
+>    - $$ b_n = b_0 + 0.5\sum_{i=1}^n (y_i - \mu)^2 $$.
 > 
-> μ_new ~ N(μ_current, step_size_μ)
-> σ²_new ~ N(σ²_current, step_size_σ²)
+> ---
 > 
-> Ensure σ²_new > 0 by taking its absolute value or using a log-normal proposal.
+> ## **Gibbs Sampling Algorithm**
 > 
-> 4. **Calculate Acceptance Ratio**
+> The Gibbs sampler alternates between sampling from these two conditional distributions:
 > 
-> Compute the ratio:
+> 1. Initialize starting values for both parameters, e.g., set:
+>    
+>    - $$ \mu^{(0)} = 0,\, (\sigma^2)^{(0)} = 1.$$
 > 
-> r = [P(data | μ_new, σ²_new) * P(μ_new) * P(σ²_new)] / [P(data | μ_current, σ²_current) * P(μ_current) * P(σ²_current)]
+> 2. For each iteration $$t = 1, 2, ..., T$$:
+>    
+>    - Sample $$ \mu^{(t)} \sim N(\mu_n, \tau_n^2) $$, using the current value of $$ (\sigma^2)^{(t-1)}.$$
+>    - Sample $$ (\sigma^2)^{(t)} \sim IG(a_n, b_n) ,$$ using the current value of $$ \mu^{(t)}.$$
 > 
-> 5. **Accept or Reject**
+> 3. Repeat for a sufficient number of iterations to ensure convergence.
 > 
-> Accept the new values with probability min(1, r). If accepted, move to (μ_new, σ²_new); otherwise, stay at (μ_current, σ²_current).
+> 4. Discard initial "burn-in" samples and use the remaining samples to approximate the posterior distributions.
 > 
-> 6. **Repeat and Sample**
+> ---
 > 
-> Repeat steps 3-5 for many iterations. After a "burn-in" period, start collecting samples.
+> ## **Implementation in R**
 > 
-> ## Benefits of MCMC in This Context
+> Here’s an example implementation:
 > 
-> 1. **Flexibility**: MCMC can handle the joint posterior of μ and σ² without needing to derive the marginal distributions analytically[2].
+> ```R
+> # Data and priors
+> y <- c(10.5, 11.3, 9.8, 10.9) # Example data
+> n <- length(y)
+> y_bar <- mean(y)
+> s_squared <- var(y)
 > 
-> 2. **Correlation Capture**: The samples will naturally capture any correlation between μ and σ² in the posterior.
+> # Prior parameters
+> mu_0 <- 10
+> tau_0_squared <- 4
+> a_0 <- 3
+> b_0 <- 10
 > 
-> 3. **Easy Inference**: Once you have samples, it's straightforward to compute summary statistics, credible intervals, or any other quantity of interest.
+> # Gibbs sampler settings
+> iterations <- 10000
+> burn_in <- 1000
 > 
-> 4. **Adaptability**: If you later want to change your model (e.g., add more parameters or change the prior), MCMC methods can often be easily adapted.
+> # Initialize storage
+> mu_samples <- numeric(iterations)
+> sigma_squared_samples <- numeric(iterations)
 > 
-> ## Implementation Considerations
+> # Initial values
+> mu_samples[1] <- mu_0
+> sigma_squared_samples[1] <- b_0 / (a_0 - 1)
 > 
-> 1. **Tuning**: The step sizes in the proposal distributions need to be tuned for efficient sampling. Too large, and most proposals will be rejected; too small, and the chain will move slowly[3].
+> # Gibbs sampling loop
+> for (t in 2:iterations) {
+>   # Sample mu given sigma_squared
+>   sigma_squared_t_minus_1 <- sigma_squared_samples[t-1]
+>   tau_n_squared <- 1 / (1/tau_0_squared + n/sigma_squared_t_minus_1)
+>   mu_n <- tau_n_squared * (mu_0/tau_0_squared + n*y_bar/sigma_squared_t_minus_1)
+>   mu_samples[t] <- rnorm(1, mean = mu_n, sd = sqrt(tau_n_squared))
 > 
-> 2. **Convergence**: Use multiple chains and convergence diagnostics (e.g., Gelman-Rubin statistic) to ensure your samples are representative of the true posterior.
+>   # Sample sigma_squared given mu
+>   mu_t <- mu_samples[t]
+>   a_n <- a_0 + n/2
+>   b_n <- b_0 + 0.5 * sum((y - mu_t)^2)
+>   sigma_squared_samples[t] <- 1 / rgamma(1, shape = a_n, rate = b_n)
+> }
 > 
-> 3. **Burn-in and Thinning**: Discard the initial samples (burn-in) and potentially keep only every nth sample (thinning) to reduce autocorrelation.
+> # Remove burn-in samples
+> mu_samples <- mu_samples[-(1:burn_in)]
+> sigma_squared_samples <- sigma_squared_samples[-(1:burn_in)]
 > 
-> 4. **Software**: Consider using established MCMC software like PyMC, Stan, or JAGS, which handle many implementation details automatically[4].
+> # Summarize results
+> cat("Posterior mean of mu:", mean(mu_samples), "\n")
+> cat("Posterior mean of sigma^2:", mean(sigma_squared_samples), "\n")
+> ```
 > 
-> By using MCMC, you can obtain a set of samples that represent your posterior distribution. From these samples, you can easily compute means, credible intervals, and other quantities of interest, providing a full Bayesian treatment of your inference problem.
+> ---
+> 
+> ## **Key Points**
+> 
+> - The Gibbs sampler relies on cycling through the full conditional distributions.
+> - Convergence diagnostics are essential to ensure that the chain has reached its stationary distribution.
+> - The posterior samples can be used to compute summaries (e.g., mean or credible intervals).
+> 
+> This approach effectively approximates the posterior distribution of both parameters given your prior beliefs and observed data.
 > 
 > Citations:
-> [1] https://link.springer.com/article/10.3758/s13423-016-1015-8
-> [2] https://en.wikipedia.org/wiki/Markov_chain_monte_carlo
-> [3] https://towardsdatascience.com/bayesian-inference-problem-mcmc-and-variational-inference-25a8aa9bce29?gi=b9f8ae748bb2
-> [4] https://www.quantstart.com/articles/Markov-Chain-Monte-Carlo-for-Bayesian-Inference-The-Metropolis-Algorithm/
+> [1] https://bookdown.org/rdpeng/advstatcomp/gibbs-sampler.html
+> [2] https://cja.education.illinois.edu/docs/librariesprovider37/edpsy590ca/lectures/5-mcmc-gibbs/mcmc_gibbs_sampling-post.pdf?Status=Master&sfvrsn=56bf73e8_5
+> [3] https://malouche.github.io/BayesianStatistics/Gibbs_sampler.html
+> [4] https://www.y1zhou.com/series/bayesian-stat/bayesian-stat-normal-two-param-setting/
+> [5] https://en.wikipedia.org/wiki/Gibbs_sampling
+> [6] http://optimumsportsperformance.com/blog/bayesian-simple-linear-regression-by-hand-gibbs-sampler/
 
 ## 5. Definitions
 

@@ -26,4 +26,7 @@ def get(symbol: str = "sh000001", start_date: datetime.date = None, end_date: da
     # Fix this by setting the first entry to 0
     data.loc[data.index[0], 'log return'] = 0
 
+    # Write the data to a csv file under project root
+    data.to_csv("data/output.csv")
+
     return data
