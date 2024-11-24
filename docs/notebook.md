@@ -267,3 +267,7 @@ It is obvious that the most important thing we need here is the **posterior dist
 ## 6. Useful resources
 
 1. [On Bayesian inference of normal distributions](https://people.eecs.berkeley.edu/~jordan/courses/260-spring10/lectures/lecture5.pdf) - The documented version of the info given in class
+2. [走进贝叶斯统计（六）—— 吉布斯抽样 （Gibbs Sampling） - 知乎](https://zhuanlan.zhihu.com/p/416670115)
+3. [7.3 Gibbs Sampler | Advanced Statistical Computing](https://bookdown.org/rdpeng/advstatcomp/gibbs-sampler.html) - A great reference of the two full conditional distributions required
+
+
