@@ -40,32 +40,39 @@ def gibbs_sampling(n: int, # sample size
                    y: np.ndarray, # additionally observed data
                    tau_prior_alpha: int, tau_prior_beta: int, mu_prior_mean: int, mu_prior_tau: int): # The priors req'd
     # y: the observed data
-    # Intialize the values for gibbs sampler    
-    mean = 0
-    # The burn in value set for convergence
-    burn_in = 1000
+    # Intialize the values for gibbs sampler
+    # Here we use the mean of the prior
+    tau = tau_prior_alpha * tau_prior_beta
+    mean = mu_prior_mean
+
     # Two arrays to store the sampled values
-    tau_samples = np.zeros(n + burn_in)
-    mean_samples = np.zeros(n + burn_in)
-    for i in range(0, n + burn_in - 1):
+    tau_samples = np.zeros(n)
+    mean_samples = np.zeros(n)
+    tau_samples[0] = tau
+    mean_samples[0] = mean
+
+    for i in range(1, n):
         
-        gamma_sampler.reset()
+        gamma_sampler.reset(tau_prior_alpha + len(y)/2, tau_prior_beta + np.sum((y - mean_samples[i-1])**2)/2)
         tau_given_mean_and_data = gamma_sampler.sample() # The first full conditional distribution req'd
         tau_samples[i] = tau_given_mean_and_data
         
-        normal_sampler.reset()
-        tau = tau_samples[i]
+        # TODO: Check the formula, may only work for mu_prior_mean = 0
+        normal_sampler.reset(tau_samples[i-1]*np.sum(y)/(len(y)*tau_samples[i-1] + mu_prior_tau), 1/(len(y)*tau_samples[i-1] + mu_prior_tau))
         mean_given_tau_and_data = normal_sampler.sample() # The second full conditional distribution req'd
-        mean_samples[i+1] = mean_given_tau_and_data
+        mean_samples[i] = mean_given_tau_and_data
 
-    return mean_samples[burn_in:], tau_samples[burn_in:]
+    return mean_samples, tau_samples
         
-def get_VaR(points: np.ndarray, confidence = 0.95):
+def get_VaR(mean_samples: np.ndarray, tau_samples: np.ndarray, confidence = 0.95):
 
-    z_alpha = np.percentile(points, 100 * (1 - confidence))
-    return z_alpha
+    VaR_array = np.zeros(len(mean_samples))
+    for i in range(len(mean_samples)):
+        VaR = norm.ppf(1 - confidence, loc=mean_samples[i], scale=(1/(tau_samples[i]))**0.5) #Compute VaR
+        VaR_array[i] = VaR
+
+    return VaR_array
     
 
 def get_ES(points: np.ndarray, confidence = 0.95):
-    
     pass
