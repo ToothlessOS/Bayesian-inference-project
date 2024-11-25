@@ -60,8 +60,12 @@ def gibbs_sampling(n: int, # sample size
 
     return mean_samples[burn_in:], tau_samples[burn_in:]
         
-def get_VaR():
-    pass
+def get_VaR(points: np.ndarray, confidence = 0.95):
 
-def get_ES():
+    z_alpha = np.percentile(points, 100 * (1 - confidence))
+    return z_alpha
+    
+
+def get_ES(points: np.ndarray, confidence = 0.95):
+    
     pass
