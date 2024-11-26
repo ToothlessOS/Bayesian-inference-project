@@ -21,6 +21,9 @@ visualizer.checkSamplerConvergence(tau_samples, "tau")
 mean_samples = mean_samples[100:]
 tau_samples = tau_samples[100:]
 
+visualizer.checkSamplerACF(mean_samples, "mean ACF")
+visualizer.checkSamplerACF(tau_samples, "tau ACF")
+
 # Calculate and plot VaR
 VaR_samples = modeller.get_VaR(mean_samples, tau_samples, 0.95)
 visualizer.drawVaR(VaR_samples)
