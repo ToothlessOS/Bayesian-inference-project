@@ -62,17 +62,16 @@ def checkSamplerACF(data: np.ndarray, fig_name: str):
     plt.ylabel('Autocorrelation')
 
     plt.savefig(f"data/{fig_name}_acf.png")
-
     
     
-def drawVaR(data: np.ndarray):
+def drawResults(data: np.ndarray, datatype: str):
     plt.cla()
     fig, ax = plt.subplots()
 
     # Create a histogram of the data
     n, bins, patches = ax.hist(data, 50, density=True, facecolor='C0', alpha=0.75)
     ax.set_ylabel('Probability mass/density')
-    ax.set_xlabel('VaR')
+    ax.set_xlabel(f'{datatype}')
 
     # fit the data with a normal distribution
     mu, std = norm.fit(data)
@@ -86,14 +85,10 @@ def drawVaR(data: np.ndarray):
 
     # Plot the PDF on top of the histogram
     plt.plot(x, p, 'k', linewidth=2)  # 'k' is for black color line
-    ax.text(-0.08, 50, f"mu={mu:.6f}, sigma={std:.6f}")
+    if datatype == "VaR":
+        ax.text(-0.08, 50, f"mu={mu:.6f}, sigma={std:.6f}")
+    elif datatype == "ES":
+        ax.text(-0.1, 50, f"mu={mu:.6f}, sigma={std:.6f}")
 
     # Display the plot
-    plt.savefig("data/VaR.png")
-
-
-def drawPosterior():
-    pass
-
-def draw():
-    pass
+    plt.savefig(f"data/{datatype}.png")

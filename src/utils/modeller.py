@@ -57,7 +57,7 @@ def gibbs_sampling(n: int, # sample size
         tau_given_mean_and_data = gamma_sampler.sample() # The first full conditional distribution req'd
         tau_samples[i] = tau_given_mean_and_data
         
-        # TODO: Check the formula, may only work for mu_prior_mean = 0
+        # TODO: Check the formula, currently only work for mu_prior_mean = 0
         normal_sampler.reset(tau_samples[i-1]*np.sum(y)/(len(y)*tau_samples[i-1] + mu_prior_tau), 1/(len(y)*tau_samples[i-1] + mu_prior_tau))
         mean_given_tau_and_data = normal_sampler.sample() # The second full conditional distribution req'd
         mean_samples[i] = mean_given_tau_and_data
@@ -74,5 +74,13 @@ def get_VaR(mean_samples: np.ndarray, tau_samples: np.ndarray, confidence = 0.95
     return VaR_array
     
 
-def get_ES(points: np.ndarray, confidence = 0.95):
-    pass
+def get_ES(mean_samples: np.ndarray, tau_samples: np.ndarray, confidence = 0.95):
+    
+    ES_array = np.zeros(len(mean_samples))
+    for i in range(len(mean_samples)):
+        z_alpha = norm.ppf(confidence)
+        phi_z_alpha = norm.pdf(z_alpha)
+        ES = mean_samples[i] - (1/(tau_samples[i]))**0.5 * phi_z_alpha / (1 - confidence)
+        ES_array[i] = ES
+
+    return ES_array

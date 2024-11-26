@@ -26,4 +26,9 @@ visualizer.checkSamplerACF(tau_samples, "tau ACF")
 
 # Calculate and plot VaR
 VaR_samples = modeller.get_VaR(mean_samples, tau_samples, 0.95)
-visualizer.drawVaR(VaR_samples)
+visualizer.drawResults(VaR_samples, "VaR")
+
+# Calculate and plot ES
+ES_samples = modeller.get_ES(mean_samples, tau_samples, 0.95)
+visualizer.drawResults(ES_samples, "ES")
+
