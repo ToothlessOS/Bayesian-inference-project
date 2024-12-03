@@ -5,13 +5,14 @@ import utils.visualizer as visualizer
 
 # Load and cleanup data
 data = dataloader.get("sh000001", datetime.date(2021, 1, 1), datetime.date(2024, 11, 24))
+print(data)
 visualizer.drawDataset(data)
 
 # Set up the prior distribution and additional data and pass into gibbs sampler
 y = data['log return'].to_numpy()
 mean_samples, tau_samples = modeller.gibbs_sampling(10000, modeller.gamma_sampler(0,0), modeller.normal_sampler(0,0),
                                                     y, # Additional data
-                                                    0.1, 0.1, 0, 0.001) # Prior parameters
+                                                    1, 0.001, 0, 0.001) # Prior parameters
 
 # Visualize the results of the gibbs sampler
 visualizer.checkSamplerConvergence(mean_samples, "mean")
