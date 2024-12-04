@@ -57,8 +57,7 @@ def gibbs_sampling(n: int, # sample size
         tau_given_mean_and_data = gamma_sampler.sample() # The first full conditional distribution req'd
         tau_samples[i] = tau_given_mean_and_data
         
-        # TODO: Check the formula, currently only work for mu_prior_mean = 0
-        normal_sampler.reset(tau_samples[i-1]*np.sum(y)/(len(y)*tau_samples[i-1] + mu_prior_tau), 1/(len(y)*tau_samples[i-1] + mu_prior_tau))
+        normal_sampler.reset(tau_samples[i-1]*(np.sum(y)+mu_prior_mean*mu_prior_tau)/(len(y)*tau_samples[i-1] + mu_prior_tau), 1/(len(y)*tau_samples[i-1] + mu_prior_tau))
         mean_given_tau_and_data = normal_sampler.sample() # The second full conditional distribution req'd
         mean_samples[i] = mean_given_tau_and_data
 
