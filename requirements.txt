@@ -1,0 +1,4 @@
+akshare
+matplotlib
+scipy
+statsmodels
