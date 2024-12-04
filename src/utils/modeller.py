@@ -38,18 +38,23 @@ class normal_sampler(sampler):
 def gibbs_sampling(n: int, # sample size
                    gamma_sampler: gamma_sampler, normal_sampler: normal_sampler, # gamma and normal samplers req'd
                    y: np.ndarray, # additionally observed data
-                   tau_prior_alpha: int, tau_prior_beta: int, mu_prior_mean: int, mu_prior_tau: int): # The priors req'd
+                   tau_prior_alpha: int, tau_prior_beta: int, mu_prior_mean: int, mu_prior_tau: int, # The priors req'd
+                   test = False, tau_init = 0, mean_init = 0): # For testing the convergence of the sampler / determine burn-in
     # y: the observed data
     # Intialize the values for gibbs sampler
     # Here we use the mean of the prior
     tau = tau_prior_alpha * tau_prior_beta
     mean = mu_prior_mean
 
-    # Two arrays to store the sampled values
     tau_samples = np.zeros(n)
     mean_samples = np.zeros(n)
-    tau_samples[0] = tau
-    mean_samples[0] = mean
+    if test == False:
+        # Two arrays to store the sampled values
+        tau_samples[0] = tau
+        mean_samples[0] = mean
+    else:
+        tau_samples[0] = tau_init
+        mean_samples[0] = mean_init    
 
     for i in range(1, n):
         
